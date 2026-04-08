@@ -1,0 +1,11 @@
+name: data_cleaning_env
+version: "1.0.0"
+description: "A real-world data cleaning environment where AI agents must identify and fix data quality issues in messy tabular datasets. Agents perform operations like removing duplicates, fixing missing values, standardizing formats, and correcting outliers."
+author: "Team Block Dragon"
+tags:
+  - openenv
+  - data-cleaning
+  - real-world
+  - tabular-data
+entry_point: "server.app:app"
+port: 7860

@@ -1,0 +1,23 @@
+# Python compilation
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Hackathon / Debugging files we generated (NOT needed for submission)
+*.txt
+*.log
+*_src.py
+test_*.py
+core_info*
+server_info*
+pkg_info*
+
+# Only keep necessary code files
+!Pre Validation Script.txt
+!Sample Inference Script.txt
+!requirements.txt
