@@ -7,12 +7,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-cache --no-dev
 
 # Copy application code
 COPY . .
+
+# Use the virtual environment created by uv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Set environment variables
 ENV PORT=7860

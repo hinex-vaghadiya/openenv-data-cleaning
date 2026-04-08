@@ -29,7 +29,17 @@ from openai import OpenAI
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-4o-mini")
 API_KEY = os.environ.get("HF_TOKEN") or os.environ.get("OPENAI_API_KEY", "dummy-key-for-init")
-ENV_URL = os.environ.get("ENV_URL", "http://localhost:7860")
+ENV_URL = os.environ.get("ENV_URL")
+if not ENV_URL:
+    # Try to auto-discover if running on Hugging Face or known space
+    space_id = os.environ.get("SPACE_ID")
+    if space_id:
+        # e.g. "username/space-name" -> "https://username-space-name.hf.space"
+        host = space_id.replace("/", "-").lower()
+        ENV_URL = f"https://{host}.hf.space"
+    else:
+        # Final fallback
+        ENV_URL = "https://hinex-07-data-cleaning-env.hf.space"
 
 # Initialize OpenAI client
 client = OpenAI(
@@ -179,18 +189,35 @@ def run_task(task_id: str, seed: int = 42, max_retries: int = 3) -> dict:
     
     # [START] log
     start_time = time.time()
-    print(json.dumps({
+    task_start_json = {
         "type": "[START]",
         "task_id": task_id,
         "seed": seed,
         "model": MODEL_NAME,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-    }))
+    }
+    print(json.dumps(task_start_json))
     sys.stdout.flush()
     
     # Reset environment
-    obs = env_reset(task_id=task_id, seed=seed)
-    
+    try:
+        obs = env_reset(task_id=task_id, seed=seed)
+    except Exception as e:
+        print(f"  Failed to reset environment: {e}", file=sys.stderr)
+        # Emit [END] immediately on reset failure
+        print(json.dumps({
+            "type": "[END]",
+            "task_id": task_id,
+            "score": 0.0,
+            "total_reward": 0.0,
+            "steps": 0,
+            "error": f"Reset failed: {str(e)}",
+            "model": MODEL_NAME,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }))
+        sys.stdout.flush()
+        return {"type": "[END]", "task_id": task_id, "score": 0.0}
+        
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
     ]
@@ -281,29 +308,33 @@ def run_task(task_id: str, seed: int = 42, max_retries: int = 3) -> dict:
 
 def main():
     """Run the agent on all 3 tasks and report scores."""
-    print("=" * 60)
-    print("  Data Cleaning Environment - Baseline Inference")
-    print("=" * 60)
-    print(f"  Model:    {MODEL_NAME}")
-    print(f"  API URL:  {API_BASE_URL}")
-    print(f"  Env URL:  {ENV_URL}")
-    print("=" * 60)
-    sys.stdout.flush()
+    print("=" * 60, file=sys.stderr)
+    print("  Data Cleaning Environment - Baseline Inference", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
+    print(f"  Model:    {MODEL_NAME}", file=sys.stderr)
+    print(f"  API URL:  {API_BASE_URL}", file=sys.stderr)
+    print(f"  Env URL:  {ENV_URL}", file=sys.stderr)
+    print("=" * 60, file=sys.stderr)
+    sys.stderr.flush()
     
     tasks = ["task_easy", "task_medium", "task_hard"]
     results = []
     
     for task_id in tasks:
-        print(f"\n{'-' * 40}")
-        print(f"  Running: {task_id}")
-        print(f"{'-' * 40}")
-        sys.stdout.flush()
+        print(f"\n{'-' * 40}", file=sys.stderr)
+        print(f"  Running: {task_id}", file=sys.stderr)
+        print(f"{'-' * 40}", file=sys.stderr)
+        sys.stderr.flush()
         
         try:
             result = run_task(task_id, seed=42)
             results.append(result)
         except Exception as e:
-            print(f"  ERROR running {task_id}: {e}", file=sys.stderr)
+            # This catch is for unexpected errors outside the main run_task loop
+            # run_task handles its own reset/loop failures
+            print(f"  CRITICAL ERROR running {task_id}: {e}", file=sys.stderr)
+            sys.stderr.flush()
+            # If run_task didn't finish normally, try to emit a fallback [END]
             results.append({
                 "type": "[END]",
                 "task_id": task_id,
@@ -313,21 +344,21 @@ def main():
                 "error": str(e),
             })
     
-    # Final summary
-    print(f"\n{'=' * 60}")
-    print("  BASELINE RESULTS SUMMARY")
-    print(f"{'=' * 60}")
+    # Final summary (to stderr)
+    print(f"\n{'=' * 60}", file=sys.stderr)
+    print("  BASELINE RESULTS SUMMARY", file=sys.stderr)
+    print(f"{'=' * 60}", file=sys.stderr)
     for r in results:
         tid = r.get("task_id", "?")
         score = r.get("score", 0.0)
         steps = r.get("steps", 0)
         elapsed = r.get("elapsed_seconds", 0)
-        print(f"  {tid:15s}  score={score:.4f}  steps={steps}  time={elapsed:.1f}s")
+        print(f"  {tid:15s}  score={score:.4f}  steps={steps}  time={elapsed:.1f}s", file=sys.stderr)
     
     avg_score = sum(r.get("score", 0.0) for r in results) / len(results) if results else 0
-    print(f"\n  Average Score: {avg_score:.4f}")
-    print(f"{'=' * 60}")
-    sys.stdout.flush()
+    print(f"\n  Average Score: {avg_score:.4f}", file=sys.stderr)
+    print(f"{'=' * 60}", file=sys.stderr)
+    sys.stderr.flush()
 
 
 if __name__ == "__main__":
