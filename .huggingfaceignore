@@ -1,0 +1,39 @@
+# Exclude virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Exclude git metadata
+.git/
+.gitignore
+
+# Exclude python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude OS files
+.DS_Store
+Thumbs.db
+
+# Exclude hackathon/debugging files
+*.log
+validation.log
+uv_error*.log
+outputs/
+test_*.py
+core_info.txt
+server_info.txt
+pkg_info.txt
+pkg_path.txt
+push_out*.txt
+*src.py
+Sample Inference Script.txt
+Pre Validation Script.txt
+http_server_src.py
+interfaces_src.py
+types_src.py
+env_server_source.txt
+server_files.txt
