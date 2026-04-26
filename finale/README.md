@@ -13,7 +13,7 @@ pinned: false
 > **OpenEnv Hackathon 2026 Submission** | Theme 5: Wild Card
 
 ## 🔗 Important Links (Judging Requirements)
-- **Hugging Face Space:** [hinex-07/triage-ai-env](https://huggingface.co/spaces/hinex-07/data-cleaning-env) *(Please view the live Space here)*
+- **Hugging Face Space:** [hinex-07/triage-ai-env](https://huggingface.co/spaces/hinex-07/triage-ai-env) *(Please view the live Space here)*
 - **Story & Writeup:** [Read the full Blog.MD here](Blog.MD)
 - **Training Notebook:** [Colab Notebook](training/triage_ai_grpo.ipynb)
 - **Code Repository:** [GitHub Repo](https://github.com/hinex-vaghadiya/openenv-data-cleaning)
